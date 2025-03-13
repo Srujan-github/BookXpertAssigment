@@ -1,7 +1,12 @@
 package labs.creative.bookxpertassigment.ui.presentation.imagepicker
 
+import android.Manifest.permission.READ_EXTERNAL_STORAGE
+import android.Manifest.permission.READ_MEDIA_IMAGES
+import android.Manifest.permission.READ_MEDIA_VIDEO
+import android.Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
 import android.content.Context
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
 import android.util.Log
 import android.widget.Toast
@@ -80,8 +85,9 @@ fun ImagePickerScreen() {
         }
 
     val storagePermission =
-        rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestPermission()) { granted ->
-            if (granted) {
+        rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            val isGranted =  permissions.any { it.value }
+            if (isGranted) {
                 galleryLauncher.launch("image/*")
             } else {
                 Toast.makeText(context, "Storage permission was not granted", Toast.LENGTH_SHORT)
@@ -129,7 +135,13 @@ fun ImagePickerScreen() {
             }
 
             Button(onClick = {
-                storagePermission.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    storagePermission.launch(arrayOf(READ_MEDIA_IMAGES, READ_MEDIA_VIDEO, READ_MEDIA_VISUAL_USER_SELECTED))
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    storagePermission.launch(arrayOf(READ_MEDIA_IMAGES, READ_MEDIA_VIDEO))
+                } else {
+                    storagePermission.launch(arrayOf(READ_EXTERNAL_STORAGE))
+                }
             }) {
                 Text(text = "Open Gallery")
             }
